@@ -1,5 +1,8 @@
 import com.google.gson.reflect.TypeToken;
 import dto.GithubRepoDTO;
+import io.qameta.allure.Description;
+import io.qameta.allure.Step;
+import io.qameta.allure.restassured.AllureRestAssured;
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.http.ContentType;
@@ -8,6 +11,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import utils.GSONSingleton;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,11 +33,13 @@ public class GithubTests {
                 .setAccept("application/vnd.github.v3+json")
                 .setContentType(ContentType.JSON)
                 .setAuth(oauth2(GITHUB_PERSONAL_TOKEN))
+                .addFilter(new AllureRestAssured())
                 .build();
         RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
     }
 
     @Test
+    @Description("Get all github repositories test")
     @Order(1)
     public void getAllReposTest() {
         String userName = "dmitriyvusyk";
@@ -56,6 +62,7 @@ public class GithubTests {
     после чего проверить что она удалена*/
 
     @Test
+    @Description("CREATE new repository DELETE repository")
     @Order(0)
     public void createAndDeleteRepository() {
         String userName = "dmitriyvusyk";
@@ -64,6 +71,7 @@ public class GithubTests {
         JSONObject requestParams = new JSONObject();
         requestParams.put("name", expectedRepoName);
 
+        //create repository
         String createRepositoryResponse = given()
                 .body(requestParams.toString())
                 .when()
@@ -85,6 +93,7 @@ public class GithubTests {
                 () -> assertTrue(reposAfterPost.size() > existingRepos.size(), "repository is created ")
         );
 
+        //delete repository
         given()
                 .pathParam("owner", userName)
                 .pathParam("repo", expectedRepoName)
@@ -99,6 +108,7 @@ public class GithubTests {
 
     }
 
+    @Step("get all user repositories")
     private ArrayList<GithubRepoDTO> getAllRepositories(String userName) {
         String body = given()
                 .basePath(USERS_ENDPOINT)
